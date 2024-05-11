@@ -24,15 +24,15 @@ end
 ---@param printString1 string First string to print/read
 ---@param ... string Additional strings to print/read
 local function AccessiblePrintWithPrefix(printString1, ...)
-    AS:Print(printString1, ...)
     if IsPrintEnabled() then
+        AS:Print(printString1, ...)
         TextToSpeech_Speak("AccessibleSocial " .. printString1.. ..., TextToSpeech_GetSelectedVoice(0))
     end
 end
 
 local function AccessiblePrint(printString1, ...)
-    AS:Print(printString1, ...)
     if IsPrintEnabled() then
+        AS:Print(printString1, ...)
         TextToSpeech_Speak(printString1.. ..., TextToSpeech_GetSelectedVoice(0))
     end
 end
@@ -42,6 +42,7 @@ local function PrintAddonStatus()
 
     if not IsPrintEnabled() then
         enabledString = DISABLED
+        AS:Print(enabledString)
     end
 
     AccessiblePrintWithPrefix(enabledString, "")
