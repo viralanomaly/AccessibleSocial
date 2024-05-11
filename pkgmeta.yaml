@@ -1,0 +1,5 @@
+package-as: AccessibleSocial
+enable-nolib-creation: no
+license-output: LICENSE.txt
+tools-used:    
+  - ace3
