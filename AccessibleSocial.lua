@@ -6,6 +6,9 @@ local VOICE = "voice"
 local NOVOICE = "novoice"
 local REPLAY = "replay"
 local GUILD = "guild"
+local ONLINE = "online"
+local OFFLINE = "offline"
+local friends = {}
 
 AccessibleSocial = LibStub("AceAddon-3.0"):NewAddon("AccessibleSocial", "AceConsole-3.0", "AceEvent-3.0")
 AS = AccessibleSocial
@@ -20,10 +23,17 @@ end
 --- Our custom print function.  Will print to screen and check the addon voice setting before concatenating the strings to text-to-speech.
 ---@param printString1 string First string to print/read
 ---@param ... string Additional strings to print/read
-local function AccessiblePrint(printString1, ...)
+local function AccessiblePrintWithPrefix(printString1, ...)
     AS:Print(printString1, ...)
     if IsPrintEnabled() then
         TextToSpeech_Speak("AccessibleSocial " .. printString1.. ..., TextToSpeech_GetSelectedVoice(0))
+    end
+end
+
+local function AccessiblePrint(printString1, ...)
+    AS:Print(printString1, ...)
+    if IsPrintEnabled() then
+        TextToSpeech_Speak(printString1.. ..., TextToSpeech_GetSelectedVoice(0))
     end
 end
 
@@ -34,53 +44,68 @@ local function PrintAddonStatus()
         enabledString = DISABLED
     end
 
-    AccessiblePrint(enabledString, "")
+    AccessiblePrintWithPrefix(enabledString, "")
 end
 
 --- Determine if we should be printing, then get the achievement info and call our print function.
-local function PrintFriend(friendId, isCompanionApp)
-    if IsPrintEnabled() then
-        -- if self == "CHAT_MSG_BN_INLINE_TOAST_ALERT" then   
-            -- 1. text: string  
-            -- 2. playerName: string  
-            -- 3. languageName: string  
-            -- 4. channelName: string  
-            -- 5. playerName2: string  
-            -- 6. specialFlags: string  
-            -- 7. zoneChannelID: number  
-            -- 8. channelIndex: number  
-            -- 9. channelBaseName: string  
-            -- 10. languageID: number  
-            -- 11. lineID: number  
-            -- 12. guid: WOWGUID  
-            -- 13. bnSenderID: number  
-            -- 14. isMobile: boolean  
-            -- 15. isSubtitle: boolean  
-            -- 16. hideSenderInLetterbox: boolean  
-            -- 17. supressRaidIcons: boolean 
-            local _, accountName, battleTag, _, characterName, _, client, isOnline = BNGetFriendInfo(friendId)
+local function PrintFriend(accountInfo)
+    if (IsPrintEnabled() and accountInfo ~= nil) then
+            local battleTag = accountInfo.battleTag
+            local isOnline = accountInfo.gameAccountInfo.isOnline
+            local characterName = accountInfo.gameAccountInfo.characterName
+            local skipPrint = false
 
-            local onlineStatus = "offline"
-            if isOnline == true then
-                onlineStatus = "online"
+            local oldStatus = friends[battleTag]
+
+            if oldStatus ~= nil then
+                if oldStatus.charName == characterName then
+                    if oldStatus.isOnline == isOnline then
+                        -- Same character, same status, don't print
+                        skipPrint = true
+                    end
+                end
             end
 
-            AccessiblePrint("BattleNet: "..accountName.." also known as "..battleTag.." ", "is "..onlineStatus.." on "..characterName)
-        -- end
+            if skipPrint == false then
+                friends[battleTag] = {
+                    charName = characterName,
+                    isOnline = isOnline
+                }
+                local onlineStatus = (isOnline == true and ONLINE) or OFFLINE
+                if isOnline == true and characterName ~= nil then
+                    AccessiblePrintWithPrefix("BattleNet: "..battleTag, "is "..onlineStatus.." on "..characterName)
+                else
+                    AccessiblePrintWithPrefix("BattleNet: "..battleTag, "is "..onlineStatus)
+                end
+            end
     end
 end
 
 function PrintGuild()
-    local ginfo = GuildInfo()
-    local groster = GuildRoster()
+    local numTotalGuildMembers, numOnlineGuildMembers, _ = GetNumGuildMembers()
+
+    AccessiblePrintWithPrefix(numOnlineGuildMembers.." guildies online out of", numTotalGuildMembers.." total members")
+    for gIndex=1, numTotalGuildMembers do
+        local name, rankName, _, level, classDisplayName, zone, _, _, isOnline, _ = GetGuildRosterInfo(gIndex)
+        if(isOnline) then
+            PrintGuildie(name, rankName, level, classDisplayName, zone)
+        end
+    end
+end
+
+function PrintGuildie(name, rankName, level, classDisplayName, zone)
+    AccessiblePrint(rankName.." "..name, "level " .. level.." "..classDisplayName.." location: "..zone)
 end
 
 function AS:OnInitialize()
     AS:Print("OnInitialize")
-    ASDB = ASDB or {}
 
-    if ASDB.enabled == nil then
-        ASDB.enabled = true
+    local defaults = {
+        enabled = true,
+    }
+
+    if (ASDB == nil) then
+        ASDB = defaults
     end
 
     AS:RegisterChatCommand("as", "SlashCommand")
@@ -91,8 +116,7 @@ function AS:OnEnable()
     AS:Print("OnEnable")
     AS:RegisterEvent("AUTOFOLLOW_BEGIN")
     AS:RegisterEvent("AUTOFOLLOW_END")
-    -- f:RegisterEvent("CHAT_MSG_BN_INLINE_TOAST_ALERT")
-    AS:RegisterEvent("BN_FRIEND_ACCOUNT_ONLINE")
+    AS:RegisterEvent("BN_FRIEND_INFO_CHANGED")
     -- f:RegisterEvent("CHAT_MSG_BN_WHISPER")
     -- f:RegisterEvent("CHAT_MSG_INSTANCE_CHAT")
     -- f:RegisterEvent("CHAT_MSG_RAID")
@@ -106,28 +130,25 @@ function AS:OnEnable()
     PrintAddonStatus()
 end
 
---- Handler for Battlenet friend logging on event.
----@param self any
----@param event any
----@param ... unknown
-function AS:BN_FRIEND_ACCOUNT_ONLINE(eventName, friendId, isCompanionApp)
-    AS:Print("Friend!!!")
-    PrintFriend(friendId, isCompanionApp)
+function AS:BN_FRIEND_INFO_CHANGED(eventName, friendIndex)
+    if friendIndex ~= nil then
+        local accountInfo = C_BattleNet.GetFriendAccountInfo(friendIndex)
+        PrintFriend(accountInfo)
+    end
 end
 
 function AS:AUTOFOLLOW_BEGIN(event, name)
-    AccessiblePrint("Autofollowing ", name)
+    AccessiblePrintWithPrefix("Autofollowing ", name)
 end
 
 function AS:AUTOFOLLOW_END(event)
-    AccessiblePrint("No longer Autofollowing anyone")
+    AccessiblePrintWithPrefix("No longer Autofollowing", "anyone")
 end
 
 -- Configure slash commands for enable and disable of the printing
-
 function AS:SlashCommand(msg)
     local cmd1 = strsplit(" ", msg)
-    
+
     if #cmd1 > 0 then
         cmd1 = strlower(cmd1)
 
@@ -141,7 +162,7 @@ function AS:SlashCommand(msg)
             PrintGuild()
         end
     else
-        AccessiblePrint("Enter a command: /as "..ENABLE.." or /aa "..DISABLE, " or /aa "..VOICE.." or /aa "..NOVOICE.." or /aa "..REPLAY)
+        AccessiblePrintWithPrefix("Enter a command: /as "..ENABLE.." or /as "..DISABLE, " or /as "..VOICE.." or /as "..NOVOICE.." or /as "..GUILD)
     end
 end
 
