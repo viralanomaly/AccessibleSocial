@@ -272,7 +272,7 @@ function AS:SlashCommand(msg)
             PrintGuild()
         elseif cmd1 == INVITEBNET then
             InviteFriend(cmd2)
-        elseif cmd1 == LISTBNET or cmd1 = FRIENDS then
+        elseif cmd1 == LISTBNET or cmd1 == FRIENDS then
             ListBnetFriends()
         elseif cmd1 == INVITEGUILDIE then
             InviteGuildie(cmd2)
