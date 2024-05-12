@@ -10,6 +10,7 @@ local ONLINE = "online"
 local OFFLINE = "offline"
 local INVITEBNET = "invitebnet"
 local LISTBNET = "listbnet"
+local FRIENDS = "friends"
 local INVITEGUILDIE = "inviteguildie"
 
 local friends = {}
@@ -210,7 +211,7 @@ function AS:OnEnable()
     -- Send on BN whisper, read it back
     -- Read who is doing what on battlenet
     -- Send a message
-    -- invite to group
+
 
     PrintAddonStatus()
 end
@@ -233,6 +234,7 @@ end
 function AS:STURDINESS_UPDATE(event)
     local currentSturdiness = GetSturdiness()
     local durability = "Durability is now " .. currentSturdiness
+    -- AS:Print(durability)
     if ASDB.sturdiness ~= nil then
         if(ASDB.sturdiness < 10) then
             ASDB.sturdiness = currentSturdiness
@@ -254,8 +256,8 @@ end
 function AS:SlashCommand(msg)
     local cmd1, cmd2 = strsplit(" ", msg)
     local orAS = " or /as "
-    local help1 = "Enter a command: /as "..ENABLE..orAS..DISABLE..orAS..GUILD..orAS..LISTBNET
-    local help2 = orAS..INVITEBNET.." followed by the number from "..LISTBNET.."for that friend"..orAS..INVITEGUILDIE.." followed by the number from "..GUILD.." for that guild member"
+    local help1 = "Enter a command: /as "..ENABLE..orAS..DISABLE..orAS..GUILD..orAS..FRIENDS
+    local help2 = orAS..INVITEBNET.." followed by the number from "..FRIENDS.."for that friend"..orAS..INVITEGUILDIE.." followed by the number from "..GUILD.." for that guild member"
 
     if #cmd1 > 0 then
         cmd1 = strlower(cmd1)
@@ -270,7 +272,7 @@ function AS:SlashCommand(msg)
             PrintGuild()
         elseif cmd1 == INVITEBNET then
             InviteFriend(cmd2)
-        elseif cmd1 == LISTBNET then
+        elseif cmd1 == LISTBNET or cmd1 = FRIENDS then
             ListBnetFriends()
         elseif cmd1 == INVITEGUILDIE then
             InviteGuildie(cmd2)
