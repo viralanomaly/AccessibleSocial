@@ -223,18 +223,18 @@ function AS:BN_FRIEND_INFO_CHANGED(eventName, friendIndex)
     end
 end
 
-function AS:AUTOFOLLOW_BEGIN(event, name)
-    AccessiblePrintWithPrefix("Autofollowing ", name)
-end
+-- function AS:AUTOFOLLOW_BEGIN(event, name)
+--     AccessiblePrintWithPrefix("Following", "")
+-- end
 
-function AS:AUTOFOLLOW_END(event)
-    AccessiblePrintWithPrefix("No longer Autofollowing", "anyone")
-end
+-- function AS:AUTOFOLLOW_END(event)
+--     AccessiblePrintWithPrefix("Not", "following")
+-- end
 
 function AS:STURDINESS_UPDATE(event)
     local currentSturdiness = GetSturdiness()
     local durability = "Durability is now " .. currentSturdiness
-    -- AS:Print(durability)
+    AS:Print(durability)
     if ASDB.sturdiness ~= nil then
         if(ASDB.sturdiness < 10) then
             ASDB.sturdiness = currentSturdiness
