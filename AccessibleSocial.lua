@@ -197,8 +197,8 @@ end
 
 function AS:OnEnable()
     AS:Print("OnEnable")
-    AS:RegisterEvent("AUTOFOLLOW_BEGIN")
-    AS:RegisterEvent("AUTOFOLLOW_END")
+    -- AS:RegisterEvent("AUTOFOLLOW_BEGIN")
+    -- AS:RegisterEvent("AUTOFOLLOW_END")
     AS:RegisterEvent("BN_FRIEND_INFO_CHANGED")
     AS:RegisterEvent("STURDINESS_UPDATE")
     -- f:RegisterEvent("CHAT_MSG_BN_WHISPER")
